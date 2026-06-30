@@ -269,12 +269,38 @@ app.post('/api/confirmar', async (req, res) => {
 });
 
 // ─── GET /confirmacion ────────────────────────────────────────────────────────
-// Payphone redirige aquí tras el pago → redirigimos al deep link de la app
-app.get('/confirmacion', (req, res) => {
+// Payphone redirige aquí tras el pago → actualizamos sesión y redirigimos a la app
+app.get('/confirmacion', async (req, res) => {
   const { id, clientTransactionId } = req.query;
   if (!id || !clientTransactionId) {
     return res.send(paginaError('Parámetros de confirmación inválidos.'));
   }
+
+  // Buscar sesión por clientTxId y marcarla como aprobada
+  for (const [, s] of sessions) {
+    if (s.clientTxId === clientTransactionId) {
+      s.status    = 'aprobado';
+      s.payphoneId = id;
+      break;
+    }
+  }
+
+  // Verificar con Payphone y notificar N8N en background
+  try {
+    const ppRes = await fetch(
+      `https://pay.payphonetodoesposible.com/api/v1/transaction?id=${Number(id)}&clientTransactionId=${clientTransactionId}`,
+      { headers: { 'Authorization': `Bearer ${PAYPHONE_TOKEN}` } }
+    );
+    const ppData = await ppRes.json();
+    const aprobado = ppData.statusCode === 3 || ppData.transactionStatus === 'Approved';
+    if (aprobado && N8N_CONFIRMAR) {
+      fetch(N8N_CONFIRMAR, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Number(id), clientTxId: clientTransactionId, ...ppData }),
+      }).catch(() => {});
+    }
+  } catch (e) { console.error('Error verificando en /confirmacion:', e); }
   const deepLink   = `sisnetel://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}`;
   const intentLink = `intent://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}#Intent;scheme=sisnetel;package=com.sisnetel.app;end`;
   res.send(`<!DOCTYPE html>
