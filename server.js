@@ -275,19 +275,28 @@ app.get('/confirmacion', (req, res) => {
   if (!id || !clientTransactionId) {
     return res.send(paginaError('Parámetros de confirmación inválidos.'));
   }
-  // Redirige al deep link que Android intercepta y abre la app
-  const deepLink = `sisnetel://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}`;
+  const deepLink   = `sisnetel://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}`;
+  const intentLink = `intent://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}#Intent;scheme=sisnetel;package=com.sisnetel.app;end`;
   res.send(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>Redirigiendo...</title>
-  <meta http-equiv="refresh" content="1;url=${deepLink}">
 </head>
-<body style="font-family:sans-serif;text-align:center;padding:40px;">
-  <p>✅ Pago procesado. Volviendo a la aplicación...</p>
+<body style="font-family:sans-serif;text-align:center;padding:40px;background:#f0f4f8;">
+  <p style="font-size:18px;">✅ Pago procesado.<br>Volviendo a la aplicación...</p>
   <script>
-    setTimeout(function() { window.location.href = '${deepLink}'; }, 300);
+    // intent:// funciona en Chrome Custom Tab (Android)
+    try {
+      window.location.href = '${intentLink}';
+    } catch(e) {
+      window.location.href = '${deepLink}';
+    }
+    // Fallback con delay
+    setTimeout(function() {
+      try { window.location.href = '${intentLink}'; } catch(e) {}
+      setTimeout(function() { window.location.href = '${deepLink}'; }, 500);
+    }, 800);
   </script>
 </body>
 </html>`);
@@ -295,16 +304,22 @@ app.get('/confirmacion', (req, res) => {
 
 // ─── GET /cancelar ────────────────────────────────────────────────────────────
 app.get('/cancelar', (req, res) => {
+  const intentLink = `intent://cancelar#Intent;scheme=sisnetel;package=com.sisnetel.app;end`;
   res.send(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>Pago cancelado</title>
-  <meta http-equiv="refresh" content="1;url=sisnetel://cancelar">
 </head>
-<body style="font-family:sans-serif;text-align:center;padding:40px;">
-  <p>❌ Pago cancelado. Volviendo a la aplicación...</p>
-  <script>setTimeout(function(){ window.location.href='sisnetel://cancelar'; }, 300);</script>
+<body style="font-family:sans-serif;text-align:center;padding:40px;background:#f0f4f8;">
+  <p style="font-size:18px;">❌ Pago cancelado.<br>Volviendo a la aplicación...</p>
+  <script>
+    try { window.location.href = '${intentLink}'; } catch(e) {}
+    setTimeout(function() {
+      try { window.location.href = '${intentLink}'; } catch(e) {}
+      setTimeout(function() { window.location.href = 'sisnetel://cancelar'; }, 500);
+    }, 800);
+  </script>
 </body>
 </html>`);
 });
