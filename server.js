@@ -190,8 +190,8 @@ app.get('/pagar', (req, res) => {
       clientTransactionId: '${clientTxId}',
       reference: '${factura}',
       lang: 'es',
-      responseUrl: 'sisnetel://confirmacion',
-      cancellationUrl: 'sisnetel://cancelar',
+      responseUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/confirmacion',
+      cancellationUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/cancelar',
     });
 
     widget.render('pp-button-container');
@@ -254,6 +254,47 @@ app.post('/api/confirmar', async (req, res) => {
     console.error('Error confirmando con N8N:', err);
     res.status(500).json({ ok: false, error: 'Error al confirmar el pago' });
   }
+});
+
+// ─── GET /confirmacion ────────────────────────────────────────────────────────
+// Payphone redirige aquí tras el pago → redirigimos al deep link de la app
+app.get('/confirmacion', (req, res) => {
+  const { id, clientTransactionId } = req.query;
+  if (!id || !clientTransactionId) {
+    return res.send(paginaError('Parámetros de confirmación inválidos.'));
+  }
+  // Redirige al deep link que Android intercepta y abre la app
+  const deepLink = `sisnetel://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}`;
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirigiendo...</title>
+  <meta http-equiv="refresh" content="1;url=${deepLink}">
+</head>
+<body style="font-family:sans-serif;text-align:center;padding:40px;">
+  <p>✅ Pago procesado. Volviendo a la aplicación...</p>
+  <script>
+    setTimeout(function() { window.location.href = '${deepLink}'; }, 300);
+  </script>
+</body>
+</html>`);
+});
+
+// ─── GET /cancelar ────────────────────────────────────────────────────────────
+app.get('/cancelar', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pago cancelado</title>
+  <meta http-equiv="refresh" content="1;url=sisnetel://cancelar">
+</head>
+<body style="font-family:sans-serif;text-align:center;padding:40px;">
+  <p>❌ Pago cancelado. Volviendo a la aplicación...</p>
+  <script>setTimeout(function(){ window.location.href='sisnetel://cancelar'; }, 300);</script>
+</body>
+</html>`);
 });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
