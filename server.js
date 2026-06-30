@@ -4,6 +4,16 @@ const fetch = require('node-fetch');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
+
+// CORS — permite peticiones desde la app (http://localhost) y cualquier origen
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
