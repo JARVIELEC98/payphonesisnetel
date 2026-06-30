@@ -67,7 +67,7 @@ app.get('/pagar', (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Pago Sisnetel</title>
-  <script src="https://cdn.payphone.com.ec/js/PPWidget.js"></script>
+  <script src="https://cdn.payphone.com.ec/js/PPWidget.js" id="pp-sdk"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -180,21 +180,35 @@ app.get('/pagar', (req, res) => {
   </div>
 
   <script>
-    // Inicializa el widget con el token (solo existe en el servidor)
-    var widget = new window.PPaymentButtonBox({
-      token: '${PAYPHONE_TOKEN}',
-      amount: ${montoInt},
-      amountWithoutTax: ${montoInt},
-      currency: 'USD',
-      storeId: '${PAYPHONE_STORE_ID}',
-      clientTransactionId: '${clientTxId}',
-      reference: '${factura}',
-      lang: 'es',
-      responseUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/confirmacion',
-      cancellationUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/cancelar',
-    });
+    function initPayphone() {
+      if (!window.PPaymentButtonBox) {
+        document.getElementById('pp-button-container').innerHTML =
+          '<p style="color:red;text-align:center;font-size:13px;">Error al cargar el widget. Recarga la página.</p>';
+        return;
+      }
+      var widget = new window.PPaymentButtonBox({
+        token: '${PAYPHONE_TOKEN}',
+        amount: ${montoInt},
+        amountWithoutTax: ${montoInt},
+        currency: 'USD',
+        storeId: '${PAYPHONE_STORE_ID}',
+        clientTransactionId: '${clientTxId}',
+        reference: '${factura}',
+        lang: 'es',
+        responseUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/confirmacion',
+        cancellationUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/cancelar',
+      });
+      widget.render('pp-button-container');
+    }
 
-    widget.render('pp-button-container');
+    // Espera que el SDK cargue antes de inicializar
+    var ppScript = document.getElementById('pp-sdk');
+    if (ppScript.readyState === 'complete' || document.readyState === 'complete') {
+      initPayphone();
+    } else {
+      ppScript.addEventListener('load', initPayphone);
+      window.addEventListener('load', initPayphone);
+    }
 
     // Cuando Payphone inicia el cobro, bloquea la UI
     document.getElementById('pp-button-container').addEventListener('click', function() {
