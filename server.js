@@ -203,11 +203,22 @@ app.get('/pagar', (req, res) => {
       setTimeout(initPayphone, 300);
     });
 
-    // Cuando Payphone inicia el cobro, bloquea la UI
-    document.getElementById('pp-button-container').addEventListener('click', function() {
-      setTimeout(function() {
-        document.getElementById('overlay').classList.add('visible');
-      }, 500);
+    // Muestra overlay solo al hacer clic en el botón "Continuar" de Payphone
+    document.getElementById('pp-button-container').addEventListener('click', function(e) {
+      var el = e.target;
+      // Buscar si el clic fue en un botón de tipo submit/continuar
+      for (var i = 0; i < 5; i++) {
+        if (!el) break;
+        var tag = el.tagName ? el.tagName.toLowerCase() : '';
+        var txt = el.textContent ? el.textContent.trim().toLowerCase() : '';
+        if (tag === 'button' && (txt.includes('continuar') || txt.includes('pagar') || txt.includes('pay'))) {
+          setTimeout(function() {
+            document.getElementById('overlay').classList.add('visible');
+          }, 800);
+          break;
+        }
+        el = el.parentElement;
+      }
     }, true);
   </script>
 </body>
