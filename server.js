@@ -235,26 +235,35 @@ app.post('/api/confirmar', async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Parámetros requeridos: id, clientTxId' });
   }
 
-  // Reenviar a N8N para que confirme con Payphone y active en Mikrowisp
   try {
-    const n8nRes = await fetch(N8N_CONFIRMAR, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: Number(id), clientTxId }),
-    });
+    // 1. Verificar transacción directamente con Payphone
+    const ppRes = await fetch(
+      `https://pay.payphonetodoesposible.com/api/v1/transaction?id=${Number(id)}&clientTransactionId=${clientTxId}`,
+      { headers: { 'Authorization': `Bearer ${PAYPHONE_TOKEN}` } }
+    );
+    const ppData = await ppRes.json();
+    console.log('Payphone verify:', JSON.stringify(ppData));
 
-    const data = await n8nRes.json();
+    const aprobado = ppData.statusCode === 3 || ppData.transactionStatus === 'Approved';
 
-    // Marcar sesión como pagada si N8N confirma aprobado
+    // 2. Marcar sesión
     if (session && sessions.has(session)) {
-      const aprobado = data.statusCode === 3 || data.transactionStatus === 'Approved';
       sessions.get(session).status = aprobado ? 'aprobado' : 'rechazado';
       sessions.get(session).payphoneId = id;
     }
 
-    res.json(data);
+    // 3. Si aprobado, notificar a N8N para activar en Mikrowisp
+    if (aprobado && N8N_CONFIRMAR) {
+      fetch(N8N_CONFIRMAR, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Number(id), clientTxId, ...ppData }),
+      }).catch(err => console.error('Error notificando N8N:', err));
+    }
+
+    res.json(ppData);
   } catch (err) {
-    console.error('Error confirmando con N8N:', err);
+    console.error('Error confirmando con Payphone:', err);
     res.status(500).json({ ok: false, error: 'Error al confirmar el pago' });
   }
 });
