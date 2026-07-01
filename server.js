@@ -302,29 +302,31 @@ app.get('/confirmacion', async (req, res) => {
       }).catch(() => {});
     }
   } catch (e) { console.error('Error verificando en /confirmacion:', e); }
-  const deepLink   = `sisnetel://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}`;
   const intentLink = `intent://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}#Intent;scheme=sisnetel;package=com.sisnetel.app;end`;
   res.send(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Redirigiendo...</title>
+  <title>Pago aprobado</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 40px 20px; background: #f0f4f8; }
+    .card { background: white; border-radius: 16px; padding: 32px 24px; max-width: 360px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .check { font-size: 56px; margin-bottom: 12px; }
+    h2 { color: #16a34a; margin: 0 0 8px; }
+    p { color: #6b7280; font-size: 14px; margin: 0 0 24px; }
+    .btn { display: block; width: 100%; padding: 14px; background: #1a56db; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .hint { margin-top: 16px; font-size: 12px; color: #9ca3af; }
+  </style>
 </head>
-<body style="font-family:sans-serif;text-align:center;padding:40px;background:#f0f4f8;">
-  <p style="font-size:18px;">✅ Pago procesado.<br>Volviendo a la aplicación...</p>
-  <script>
-    // intent:// funciona en Chrome Custom Tab (Android)
-    try {
-      window.location.href = '${intentLink}';
-    } catch(e) {
-      window.location.href = '${deepLink}';
-    }
-    // Fallback con delay
-    setTimeout(function() {
-      try { window.location.href = '${intentLink}'; } catch(e) {}
-      setTimeout(function() { window.location.href = '${deepLink}'; }, 500);
-    }, 800);
-  </script>
+<body>
+  <div class="card">
+    <div class="check">✅</div>
+    <h2>¡Pago aprobado!</h2>
+    <p>Tu pago fue procesado correctamente.</p>
+    <a class="btn" href="${intentLink}">Volver a la aplicación</a>
+    <p class="hint">Si el botón no funciona, cierra esta ventana con la ✕</p>
+  </div>
 </body>
 </html>`);
 });
