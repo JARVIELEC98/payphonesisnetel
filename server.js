@@ -219,10 +219,11 @@ app.get('/api/estado', (req, res) => {
   }
   const s = sessions.get(session);
   res.json({
-    status: s.status,
-    factura: s.factura,
-    monto: s.monto,
+    status:    s.status,
+    factura:   s.factura,
+    monto:     s.monto,
     payphoneId: s.payphoneId,
+    clientTxId: s.clientTxId,
   });
 });
 
