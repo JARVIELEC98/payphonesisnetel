@@ -277,31 +277,21 @@ app.get('/confirmacion', async (req, res) => {
     return res.send(paginaError('Parámetros de confirmación inválidos.'));
   }
 
-  // Buscar sesión por clientTxId y marcarla como aprobada
+  // Enviar directo a N8N para que procese el pago
+  fetch(N8N_CONFIRMAR, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: Number(id), clientTxId: clientTransactionId }),
+  }).catch(err => console.error('Error llamando N8N:', err));
+
+  // Marcar sesión si existe
   for (const [, s] of sessions) {
     if (s.clientTxId === clientTransactionId) {
-      s.status    = 'aprobado';
+      s.status     = 'aprobado';
       s.payphoneId = id;
       break;
     }
   }
-
-  // Verificar con Payphone y notificar N8N en background
-  try {
-    const ppRes = await fetch(
-      `https://pay.payphonetodoesposible.com/api/v1/transaction?id=${Number(id)}&clientTransactionId=${clientTransactionId}`,
-      { headers: { 'Authorization': `Bearer ${PAYPHONE_TOKEN}` } }
-    );
-    const ppData = await ppRes.json();
-    const aprobado = ppData.statusCode === 3 || ppData.transactionStatus === 'Approved';
-    if (aprobado && N8N_CONFIRMAR) {
-      fetch(N8N_CONFIRMAR, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: Number(id), clientTxId: clientTransactionId, ...ppData }),
-      }).catch(() => {});
-    }
-  } catch (e) { console.error('Error verificando en /confirmacion:', e); }
   const intentLink = `intent://confirmacion?id=${id}&clientTransactionId=${clientTransactionId}#Intent;scheme=sisnetel;package=com.sisnetel.app;end`;
   res.send(`<!DOCTYPE html>
 <html>
