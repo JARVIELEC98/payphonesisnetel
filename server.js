@@ -37,7 +37,7 @@ setInterval(() => {
 // ─── GET /pagar ───────────────────────────────────────────────────────────────
 // App abre: https://pago.sisnetel.com/pagar?session=XYZ&monto=2500&factura=48577
 app.get('/pagar', (req, res) => {
-  const { session, monto, factura } = req.query;
+  const { session, monto, factura, clienteId } = req.query;
 
   if (!session || !monto || !factura) {
     return res.status(400).send(paginaError('Parámetros inválidos. Vuelve a la app.'));
@@ -189,7 +189,7 @@ app.get('/pagar', (req, res) => {
         currency: 'USD',
         storeId: '${PAYPHONE_STORE_ID}',
         clientTransactionId: '${clientTxId}',
-        reference: '${factura}',
+        reference: '${clienteId ?? factura}',
         lang: 'es',
         responseUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/confirmacion',
         cancellationUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/cancelar',
