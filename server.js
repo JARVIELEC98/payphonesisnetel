@@ -37,9 +37,9 @@ setInterval(() => {
 // ─── GET /pagar ───────────────────────────────────────────────────────────────
 // App abre: https://pago.sisnetel.com/pagar?session=XYZ&monto=2500&factura=48577
 app.get('/pagar', (req, res) => {
-  const { session, monto, factura, clienteId, cedula } = req.query;
+  const { session, monto, cedula } = req.query;
 
-  if (!session || !monto || !factura) {
+  if (!session || !monto) {
     return res.status(400).send(paginaError('Parámetros inválidos. Vuelve a la app.'));
   }
 
@@ -54,7 +54,7 @@ app.get('/pagar', (req, res) => {
   // Guardar sesión
   sessions.set(session, {
     status: 'pendiente',
-    factura,
+    cedula,
     monto: montoInt,
     clientTxId,
     payphoneId: null,
@@ -168,7 +168,7 @@ app.get('/pagar', (req, res) => {
     <hr class="divider">
     <div class="monto-label">Total a pagar</div>
     <div class="monto">$${montoUSD}</div>
-    <div class="factura-badge">${cedula ? 'Cédula: ' + cedula : 'Factura #' + factura}</div>
+    <div class="factura-badge">${cedula ? 'Cédula: ' + cedula : ''}</div>
     <div id="pp-button-container"></div>
     <div class="aviso">🔒 Pago seguro con Payphone</div>
   </div>
@@ -189,7 +189,7 @@ app.get('/pagar', (req, res) => {
         currency: 'USD',
         storeId: '${PAYPHONE_STORE_ID}',
         clientTransactionId: '${clientTxId}',
-        reference: '${clienteId ?? factura}',
+        reference: '${cedula ?? ''}',
         lang: 'es',
         responseUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/confirmacion',
         cancellationUrl: 'https://nuevo-payphonesisnetel.u5r75b.easypanel.host/cancelar',
