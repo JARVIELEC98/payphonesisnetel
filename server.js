@@ -37,7 +37,7 @@ setInterval(() => {
 // ─── GET /pagar ───────────────────────────────────────────────────────────────
 // App abre: https://pago.sisnetel.com/pagar?session=XYZ&monto=2500&factura=48577
 app.get('/pagar', (req, res) => {
-  const { session, monto, factura, clienteId } = req.query;
+  const { session, monto, factura, clienteId, cedula } = req.query;
 
   if (!session || !monto || !factura) {
     return res.status(400).send(paginaError('Parámetros inválidos. Vuelve a la app.'));
@@ -168,7 +168,7 @@ app.get('/pagar', (req, res) => {
     <hr class="divider">
     <div class="monto-label">Total a pagar</div>
     <div class="monto">$${montoUSD}</div>
-    <div class="factura-badge">Factura #${factura}</div>
+    <div class="factura-badge">${cedula ? 'Cédula: ' + cedula : 'Factura #' + factura}</div>
     <div id="pp-button-container"></div>
     <div class="aviso">🔒 Pago seguro con Payphone</div>
   </div>
