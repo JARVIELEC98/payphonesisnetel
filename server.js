@@ -5,6 +5,10 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 
+const paginaError = (msg) => `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head>
+<body style="font-family:sans-serif;text-align:center;padding:40px;">
+<h2>⚠️ ${msg}</h2></body></html>`;
+
 // CORS — permite peticiones desde la app (http://localhost) y cualquier origen
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
